@@ -1,0 +1,30 @@
+# Example Terraform Variables Configuration
+# Copy this file to terraform.tfvars and modify the values below
+
+# AWS Configuration
+aws_region = "us-west-2"
+availability_zone = "us-west-2a"
+availability_zone_secondary = "us-west-2b"
+
+# Your IP address for SSH access (REQUIRED)
+# Get your IP from: https://whatismyipaddress.com/
+# Format: YOUR_IP_ADDRESS/32
+your_ip_address = "1.2.3.4/32"
+
+# SSH Key Configuration (optional)
+# Leave empty to auto-generate a key pair
+# Or provide your public key content
+public_key = ""
+
+# Database Configuration
+db_name = "testdb"
+db_username = "postgres"
+db_password = "YourSecurePassword123!"  # CHANGE THIS!
+
+# Instance Configuration
+db_instance_class = "db.t3.micro"  # Minimal cost for testing
+instance_type = "t3.micro"         # Minimal cost for testing
+
+# For better performance testing (higher cost):
+# db_instance_class = "db.t3.small"
+# instance_type = "t3.medium" 
