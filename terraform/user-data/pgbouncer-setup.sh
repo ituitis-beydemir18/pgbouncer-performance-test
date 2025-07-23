@@ -218,6 +218,14 @@ systemctl daemon-reload
 systemctl enable pgbouncer
 systemctl start pgbouncer
 
+# Wait for initial startup
+sleep 3
+
+# Restart PgBouncer to ensure config is properly loaded
+# This fixes an issue where PgBouncer might bind to 127.0.0.1 instead of 0.0.0.0 on first start
+echo "Restarting PgBouncer to ensure proper configuration loading..."
+systemctl restart pgbouncer
+
 # Check if PgBouncer started successfully
 sleep 5
 if systemctl is-active --quiet pgbouncer; then

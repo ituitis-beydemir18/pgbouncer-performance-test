@@ -38,8 +38,8 @@ output "ssh_key_file" {
 output "ssh_commands" {
   description = "SSH commands to connect to instances"
   value = {
-    pgbouncer_server = "ssh -i ${var.public_key == "" ? "pgbouncer-key.pem" : "your-private-key.pem"} ubuntu@${aws_instance.pgbouncer.public_ip}"
-    test_client     = "ssh -i ${var.public_key == "" ? "pgbouncer-key.pem" : "your-private-key.pem"} ubuntu@${aws_instance.test_client.public_ip}"
+    pgbouncer_server = "ssh -i ${var.public_key == "" ? "terraform/pgbouncer-key.pem" : "your-private-key.pem"} ubuntu@${aws_instance.pgbouncer.public_ip}"
+    test_client     = "ssh -i ${var.public_key == "" ? "terraform/pgbouncer-key.pem" : "your-private-key.pem"} ubuntu@${aws_instance.test_client.public_ip}"
   }
 }
 
