@@ -80,7 +80,7 @@ if [ ! -f "$TFVARS_FILE" ]; then
     
     # Get user's current public IP
     log_info "Detecting your public IP address..."
-    USER_IP=$(curl -s https://checkip.amazonaws.com/ || curl -s https://ipinfo.io/ip || curl -s https://icanhazip.com/)
+    USER_IP=$(curl -s https://checkip.amazonaws.com/)
     
     if [ -z "$USER_IP" ]; then
         log_error "Could not detect your IP address. Please check your internet connection."
@@ -127,19 +127,12 @@ EOF
     echo "  - Instance Type: t3.micro (cost-optimized)"
     echo ""
     log_info "You can edit $TFVARS_FILE if you want to change any settings"
-        else
-            log_info "Please edit $TFVARS_FILE with your preferred editor"
-        fi
-        
-        echo ""
-        read -p "Have you updated the configuration? (y/N): " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            log_warning "Please update the configuration and run this script again"
-            exit 1
-        fi
-    else
-        log_error "terraform.tfvars.example not found. Cannot create configuration."
+    
+    echo ""
+    read -p "Have you updated the configuration? (y/N): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        log_warning "Please update the configuration and run this script again"
         exit 1
     fi
 fi
