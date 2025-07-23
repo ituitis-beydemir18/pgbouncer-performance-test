@@ -80,7 +80,7 @@ if [ ! -f "$TFVARS_FILE" ]; then
     
     # Get user's current public IP
     log_info "Detecting your public IP address..."
-    USER_IP=$(curl -s https://checkip.amazonaws.com/)
+    USER_IP=$(curl -s https://checkip.amazonaws.com/ )
     
     if [ -z "$USER_IP" ]; then
         log_error "Could not detect your IP address. Please check your internet connection."
