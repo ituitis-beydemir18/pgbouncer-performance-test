@@ -211,7 +211,11 @@ echo "======================================"
 echo "Generating Performance Analysis"
 echo "======================================"
 
-if command -v python3 > /dev/null && [ -f "analyze_results.py" ]; then
+if command -v python3 > /dev/null && [ -f "analyze_results_improved.py" ]; then
+    python3 analyze_results_improved.py "$RESULTS_DIR" "$TIMESTAMP"
+elif [ -f "/home/ubuntu/analyze_results_improved.py" ]; then
+    python3 /home/ubuntu/analyze_results_improved.py "$RESULTS_DIR" "$TIMESTAMP"
+elif command -v python3 > /dev/null && [ -f "analyze_results.py" ]; then
     python3 analyze_results.py "$RESULTS_DIR" "$TIMESTAMP"
 elif [ -f "/home/ubuntu/analyze_results.py" ]; then
     python3 /home/ubuntu/analyze_results.py "$RESULTS_DIR" "$TIMESTAMP"
@@ -259,7 +263,9 @@ echo "======================================"
 echo "Results saved to: $RESULTS_DIR"
 echo ""
 echo "Quick commands to view results:"
-echo "  cat $RESULTS_DIR/summary_$TIMESTAMP.txt"
+echo "  cat $RESULTS_DIR/detailed_analysis_$TIMESTAMP.txt    # 📊 Comprehensive reliability analysis"
+echo "  cat $RESULTS_DIR/summary_$TIMESTAMP.txt              # 📈 Basic performance summary"
+echo "  grep 'Success Rate:' $RESULTS_DIR/detailed_analysis_$TIMESTAMP.txt"
 echo "  grep 'tps =' $RESULTS_DIR/*_$TIMESTAMP.log"
 echo "  grep 'latency average' $RESULTS_DIR/*_$TIMESTAMP.log"
 echo ""
