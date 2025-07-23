@@ -19,10 +19,12 @@ apt-get upgrade -y
 apt-get install -y pgbouncer postgresql-client
 
 # Create pgbouncer user and directories
-useradd -r -s /bin/false pgbouncer || true
+# Use postgres user instead of creating new pgbouncer user
 mkdir -p /etc/pgbouncer
 mkdir -p /var/log/pgbouncer
-chown -R pgbouncer:pgbouncer /var/log/pgbouncer
+mkdir -p /run/postgresql
+chown -R postgres:postgres /var/log/pgbouncer
+chown -R postgres:postgres /run/postgresql
 
 # Database connection details from Terraform
 DB_HOST="${db_host}"
@@ -39,14 +41,14 @@ cat > /etc/pgbouncer/pgbouncer.ini << EOF
 
 ;; Database connections
 [databases]
-$DB_NAME = host=$DB_HOST port=$DB_PORT dbname=$DB_NAME
+$DB_NAME = host=$DB_HOST port=$DB_PORT dbname=$DB_NAME user=$DB_USERNAME password=$DB_PASSWORD
 
 ;; PgBouncer settings
 [pgbouncer]
 
 ;;; Administrative settings
 logfile = /var/log/pgbouncer/pgbouncer.log
-pidfile = /var/run/postgresql/pgbouncer.pid
+pidfile = /run/postgresql/pgbouncer.pid
 listen_addr = 0.0.0.0
 listen_port = 6432
 unix_socket_dir = /var/run/postgresql
@@ -100,7 +102,7 @@ cat > /etc/pgbouncer/userlist.txt << EOF
 EOF
 
 # Set proper permissions
-chown -R pgbouncer:pgbouncer /etc/pgbouncer
+chown -R postgres:postgres /etc/pgbouncer
 chmod 640 /etc/pgbouncer/pgbouncer.ini
 chmod 640 /etc/pgbouncer/userlist.txt
 
@@ -113,11 +115,11 @@ After=network.target
 
 [Service]
 Type=forking
-User=pgbouncer
-Group=pgbouncer
-ExecStart=/usr/bin/pgbouncer -d /etc/pgbouncer/pgbouncer.ini
+User=postgres
+Group=postgres
+ExecStart=/usr/sbin/pgbouncer -d /etc/pgbouncer/pgbouncer.ini
 ExecReload=/bin/kill -HUP \$MAINPID
-PIDFile=/var/run/postgresql/pgbouncer.pid
+PIDFile=/run/postgresql/pgbouncer.pid
 LimitNOFILE=65536
 
 # Restart policy

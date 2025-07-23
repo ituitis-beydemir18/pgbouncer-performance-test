@@ -76,28 +76,57 @@ TFVARS_EXAMPLE="terraform/terraform.tfvars.example"
 
 if [ ! -f "$TFVARS_FILE" ]; then
     log_warning "terraform.tfvars not found"
+    log_info "Auto-generating terraform.tfvars with optimal settings..."
     
-    if [ -f "$TFVARS_EXAMPLE" ]; then
-        log_info "Creating terraform.tfvars from example..."
-        cp "$TFVARS_EXAMPLE" "$TFVARS_FILE"
-        
-        log_warning "⚠️  IMPORTANT: Please edit $TFVARS_FILE with your settings!"
-        echo ""
-        echo "Required changes:"
-        echo "1. Set your_ip_address to your current IP (get from https://whatismyipaddress.com/)"
-        echo "2. Change the database password"
-        echo "3. Adjust AWS region if needed"
-        echo ""
-        
-        read -p "Press Enter to open the file for editing, or Ctrl+C to exit..."
-        
-        # Try to open with common editors
-        if command -v code &> /dev/null; then
-            code "$TFVARS_FILE"
-        elif command -v nano &> /dev/null; then
-            nano "$TFVARS_FILE"
-        elif command -v vim &> /dev/null; then
-            vim "$TFVARS_FILE"
+    # Get user's current public IP
+    log_info "Detecting your public IP address..."
+    USER_IP=$(curl -s https://checkip.amazonaws.com/ || curl -s https://ipinfo.io/ip || curl -s https://icanhazip.com/)
+    
+    if [ -z "$USER_IP" ]; then
+        log_error "Could not detect your IP address. Please check your internet connection."
+        exit 1
+    fi
+    
+    log_success "Detected IP: $USER_IP"
+    
+    # Generate a secure password
+    log_info "Generating secure database password..."
+    if command -v openssl &> /dev/null; then
+        DB_PASSWORD=$(openssl rand -base64 12 | tr -d "=+/" | cut -c1-12)
+    else
+        # Fallback password generation
+        DB_PASSWORD="PgBouncer$(date +%s | tail -c 4)Test!"
+    fi
+    
+    # Use detected AWS region or default to us-west-2
+    REGION=${AWS_REGION:-"us-west-2"}
+    
+    # Create terraform.tfvars with auto-detected values
+    cat > "$TFVARS_FILE" << EOF
+# AWS Configuration
+aws_region = "$REGION"
+availability_zone = "${REGION}a"
+
+# Your IP for SSH access (auto-detected)
+your_ip_address = "$USER_IP/32"
+
+# Database Configuration
+db_name = "testdb"
+db_username = "postgres"
+db_password = "$DB_PASSWORD"
+
+# Instance Configuration
+instance_type = "t3.micro"  # Minimal cost for testing
+db_instance_class = "db.t3.micro"  # Minimal cost for testing
+EOF
+
+    log_success "Created terraform.tfvars with auto-detected settings:"
+    echo "  - Your IP: $USER_IP/32"
+    echo "  - AWS Region: $REGION"
+    echo "  - Database Password: $DB_PASSWORD"
+    echo "  - Instance Type: t3.micro (cost-optimized)"
+    echo ""
+    log_info "You can edit $TFVARS_FILE if you want to change any settings"
         else
             log_info "Please edit $TFVARS_FILE with your preferred editor"
         fi

@@ -16,7 +16,7 @@ apt-get update
 apt-get upgrade -y
 
 # Install PostgreSQL client, pgbench, and other tools
-apt-get install -y postgresql-client postgresql-contrib python3 python3-pip htop sysstat
+apt-get install -y postgresql-client postgresql-contrib python3 python3-pip htop sysstat bc
 
 # Install Python packages for analysis
 pip3 install psycopg2-binary matplotlib pandas
@@ -78,22 +78,22 @@ else
     echo "✗ PgBouncer connection failed"
 fi
 
-# Create basic test script that will be expanded later
-cat > /home/ubuntu/run_performance_test.sh << 'EOSCRIPT'
+# Create placeholder test script (will be replaced by post_deploy.sh)
+cat > /home/ubuntu/run_performance_test.sh << 'EOF'
 #!/bin/bash
 source /home/ubuntu/.env
 
 echo "Performance test script placeholder"
-echo "This will be updated with full tests after deployment"
+echo "Run post_deploy.sh to install full test scripts"
 echo ""
 echo "Environment configured for:"
 echo "  Database: $DB_HOST:$DB_PORT"
 echo "  PgBouncer: $PGBOUNCER_HOST:$PGBOUNCER_PORT"
 echo ""
-echo "Run basic tests:"
+echo "Basic test commands:"
 echo "  psql -h \$DB_HOST -p \$DB_PORT -U \$DB_USERNAME -d \$DB_NAME -c 'SELECT version();'"
 echo "  psql -h \$PGBOUNCER_HOST -p \$PGBOUNCER_PORT -U \$DB_USERNAME -d \$DB_NAME -c 'SELECT version();'"
-EOSCRIPT
+EOF
 
 chmod +x /home/ubuntu/run_performance_test.sh
 
@@ -103,3 +103,4 @@ chown -R ubuntu:ubuntu /home/ubuntu/
 echo "Test client setup completed successfully at $(date)"
 echo ""
 echo "Setup complete! Ready for performance testing." 
+echo "Run post_deploy.sh to install full performance test scripts." 

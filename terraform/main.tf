@@ -281,6 +281,12 @@ resource "aws_db_parameter_group" "postgres_params" {
     apply_method = "pending-reboot"
   }
 
+  parameter {
+    name         = "rds.force_ssl"
+    value        = "0"
+    apply_method = "immediate"
+  }
+
   tags = {
     Name        = "pgbouncer-test-params"
     Environment = "test"
