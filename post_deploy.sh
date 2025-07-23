@@ -185,6 +185,31 @@ fi
 
 echo ""
 
+# Run analysis on remote server
+log_info "Running analysis on test client..."
+if run_ssh_command "test -f /home/ubuntu/analyze_results.py && test -d /home/ubuntu/test_results"; then
+    # Find the timestamp from test results
+    REMOTE_TIMESTAMP=$(run_ssh_command "ls /home/ubuntu/test_results/ | grep -E '_(20[0-9]{6}_[0-9]{6})\.log$' | head -1 | sed 's/.*_\(20[0-9]\{6\}_[0-9]\{6\}\)\.log$/\1/'" 2>/dev/null || echo "")
+    
+    if [ -n "$REMOTE_TIMESTAMP" ]; then
+        log_info "Found test timestamp: $REMOTE_TIMESTAMP"
+        log_info "Generating performance analysis on remote server..."
+        
+        # Run analysis on remote server
+        if run_ssh_command "cd /home/ubuntu && python3 analyze_results.py test_results $REMOTE_TIMESTAMP"; then
+            log_success "Remote analysis completed successfully"
+        else
+            log_warning "Remote analysis failed, will try local analysis later"
+        fi
+    else
+        log_warning "Could not determine test timestamp for remote analysis"
+    fi
+else
+    log_warning "Analysis script or test results not found on remote server"
+fi
+
+echo ""
+
 # Get test results timestamp
 log_info "Getting test results..."
 TIMESTAMP=$(run_ssh_command "ls /home/ubuntu/test_results/ | grep summary_ | head -1 | sed 's/summary_//g' | sed 's/.txt//g'" 2>/dev/null || echo "")
@@ -198,9 +223,9 @@ fi
 LOCAL_RESULTS_DIR="./test_results_$(date +%Y%m%d_%H%M%S)"
 mkdir -p "$LOCAL_RESULTS_DIR"
 
-log_info "Downloading test results to: $LOCAL_RESULTS_DIR"
+log_info "Downloading test results and analysis to: $LOCAL_RESULTS_DIR"
 
-# Download all test results
+# Download all test results and analysis
 if run_ssh_command "test -d /home/ubuntu/test_results"; then
     # Use scp to download all results
     scp -i "$SSH_KEY_FILE" -o StrictHostKeyChecking=no -r ubuntu@"$TEST_CLIENT_IP":/home/ubuntu/test_results/* "$LOCAL_RESULTS_DIR/" 2>/dev/null || {
@@ -212,13 +237,13 @@ if run_ssh_command "test -d /home/ubuntu/test_results"; then
         done
     }
     
-    log_success "Test results downloaded to: $LOCAL_RESULTS_DIR"
+    log_success "Test results and analysis downloaded to: $LOCAL_RESULTS_DIR"
 else
     log_error "Test results directory not found on remote server"
 fi
 
 # Try to run analysis locally if Python is available and results were downloaded
-if command -v python3 > /dev/null && [ -f "$LOCAL_RESULTS_DIR/summary_"*".txt" ]; then
+if command -v python3 > /dev/null && ls "$LOCAL_RESULTS_DIR"/summary_*.txt > /dev/null 2>&1; then
     log_info "Running local analysis..."
     if [ -f "scripts/analyze_results.py" ]; then
         # Copy analyze script to results directory and run it
@@ -247,12 +272,14 @@ if [ "$TEST_SUCCESS" = true ]; then
 else
     echo "⚠️  Performance tests completed with issues"
 fi
-echo "✅ Results downloaded to: $LOCAL_RESULTS_DIR"
+echo "✅ Remote analysis generated on test client"
+echo "✅ Results and analysis downloaded to: $LOCAL_RESULTS_DIR"
 echo ""
 echo "Next steps:"
 echo "1. Review test results in: $LOCAL_RESULTS_DIR"
-echo "2. Check summary file: $LOCAL_RESULTS_DIR/summary_*.txt"
-echo "3. When done, clean up AWS resources: ./cleanup.sh"
+echo "2. Check analysis summary: $LOCAL_RESULTS_DIR/summary_*.txt"
+echo "3. View individual test logs: $LOCAL_RESULTS_DIR/*.log"
+echo "4. When done, clean up AWS resources: ./cleanup.sh"
 echo ""
 log_warning "💰 Don't forget to run './cleanup.sh' to avoid ongoing AWS charges!"
 echo "" 

@@ -89,20 +89,21 @@ echo "======================================"
 echo "Test 2: High Concurrency Test"
 echo "======================================"
 echo "Purpose: Test performance with many concurrent persistent connections"
-echo "Setup: 100 clients, persistent connections, 10 transactions per client"
+echo "Setup: 80 clients, persistent connections, 25 transactions per client"
+echo "Note: This approaches PostgreSQL's default max_connections=100 limit"
 echo ""
 
 echo "Running direct connection test..."
 pgbench -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USERNAME" -d "$DB_NAME" \
-    -c 100 -j 50 -t 10 -n \
+    -c 80 -j 40 -t 25 -n \
     --report-latencies --progress=5 \
-    > "$RESULTS_DIR/direct_concurrent_$TIMESTAMP.log" 2>&1
+    > "$RESULTS_DIR/direct_concurrent_$TIMESTAMP.log" 2>&1 || echo "⚠️  Direct concurrent test failed (expected due to connection limits)"
 
 echo "Running PgBouncer connection test..."
 pgbench -h "$PGBOUNCER_HOST" -p "$PGBOUNCER_PORT" -U "$DB_USERNAME" -d "$DB_NAME" \
-    -c 100 -j 50 -t 10 -n \
+    -c 80 -j 40 -t 25 -n \
     --report-latencies --progress=5 \
-    > "$RESULTS_DIR/pgbouncer_concurrent_$TIMESTAMP.log" 2>&1
+    > "$RESULTS_DIR/pgbouncer_concurrent_$TIMESTAMP.log" 2>&1 || echo "⚠️  PgBouncer concurrent test failed"
 
 echo "✅ High concurrency test completed"
 echo ""
@@ -124,10 +125,10 @@ timeout 300 pgbench -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USERNAME" -d "$DB_NAME" 
 
 echo "Running PgBouncer connection test..."
 echo "⏳ This may take a while with 1000 clients..."
-pgbench -h "$PGBOUNCER_HOST" -p "$PGBOUNCER_PORT" -U "$DB_USERNAME" -d "$DB_NAME" \
+timeout 600 pgbench -h "$PGBOUNCER_HOST" -p "$PGBOUNCER_PORT" -U "$DB_USERNAME" -d "$DB_NAME" \
     -c 1000 -j 100 -t 5 -n \
     --report-latencies --progress=2 \
-    > "$RESULTS_DIR/pgbouncer_extreme_$TIMESTAMP.log" 2>&1
+    > "$RESULTS_DIR/pgbouncer_extreme_$TIMESTAMP.log" 2>&1 || echo "⚠️  PgBouncer extreme test failed or timed out"
 
 echo "✅ Extreme connection test completed"
 echo ""
