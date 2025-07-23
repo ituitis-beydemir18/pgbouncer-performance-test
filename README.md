@@ -34,75 +34,131 @@ This setup creates:
 
 ## 🚀 Quick Start
 
-### Prerequisites
+## 🛠 Prerequisites
 
-1. **AWS Account** with appropriate permissions
-2. **Terraform** >= 1.0
-3. **AWS CLI** configured with your credentials
+- **AWS Account with appropriate permissions**  
+  You need to create an [AWS account](https://aws.amazon.com/). To get started quickly, you can assign `AdministratorAccess` to the user, but this is **not recommended for production** environments due to security risks.  
+  🔗 [Create an IAM User Guide](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html)
 
-### Step 1: Clone Repository
+- **Terraform >= 1.0**  
+  Make sure Terraform version 1.0 or higher is installed on your system.  
+  🔗 [Terraform Download Page](https://developer.hashicorp.com/terraform/downloads)
+
+- **AWS CLI configured with your credentials**  
+  Install the AWS CLI and run `aws configure` to provide your access credentials.  
+  🔗 [AWS CLI Installation Guide](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)  
+  🔗 [Create AWS Access Keys Guide](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html)
+
+## 🔧 Main Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `./deploy.sh` | Deploy infrastructure (RDS, EC2, PgBouncer setup) |
+| `./post_deploy.sh` | Run tests and download results locally |
+| `./cleanup.sh` | Destroy all AWS resources |
+
+## 📊 Test Results & Analysis
+
+After running tests, you'll get local files with:
+- **Performance metrics**: TPS, latency, throughput comparisons
+- **Reliability metrics**: Success rates, connection rejections, timeouts
+- **Detailed logs**: Individual pgbench outputs for each test scenario
+- **Summary reports**: Comprehensive analysis with recommendations
+
+## 🧪 Test Cases & Metrics
+
+| Test Case | Scenario | Metrics Measured |
+|-----------|----------|------------------|
+| **Connection Overhead** | 20 clients, new connection per transaction | Connection setup time, TPS |
+| **High Concurrency** | 80 clients, persistent connections | Scalability limits, resource contention |
+| **Extreme Load** | 1000 clients, exceeds DB limits | Connection rejections, queue handling |
+
+**Reliability Metrics:**
+- Success/Error rates
+- Connection rejection counts  
+- Timeout rates
+- Error type classification
+- Performance consistency
+
+## 🧹 Test Isolation & Cleanup
+
+To ensure fair comparison, **full cleanup** runs between each test phase:
+- Database statistics reset
+- PgBouncer connection pool reset
+- OS cache clearing
+- TCP connection settling (35-second intervals)
+
+This eliminates contamination effects like warm caches or pre-established connections.
+
+## 🏗️ Test Architecture
+
+```
+[Test Client EC2] ──direct──→ [RDS PostgreSQL]
+      │                              ↑
+      └─────→ [PgBouncer EC2] ────────┘
+```
+
+**Infrastructure:**
+- **Test Client**: Runs pgbench, generates load
+- **PgBouncer Server**: Connection pooling, transaction mode
+- **RDS PostgreSQL**: Target database (max_connections=100)
+
+**Test Flow:**
+1. Client sends direct requests to RDS
+2. Client sends requests through PgBouncer to RDS  
+3. Metrics compared for same workload patterns
+
+## 📁 Project Structure
+
+```
+pgbouncer-performance-test/
+├── scripts/
+│   ├── run_performance_test.sh      # Main test execution script
+│   ├── analyze_results_improved.py  # Detailed metrics analysis
+│   ├── test_direct_connection.sh    # Direct DB connection tests
+│   └── test_pgbouncer.sh           # PgBouncer connection tests
+├── terraform/
+│   ├── main.tf                     # Infrastructure definitions
+│   ├── variables.tf                # Configuration variables
+│   ├── outputs.tf                  # Infrastructure outputs
+│   └── user-data/                  # EC2 setup scripts
+├── docs/                           # Documentation and guides
+├── deploy.sh                       # Infrastructure deployment
+├── post_deploy.sh                  # Test execution & results
+└── cleanup.sh                      # Resource cleanup
+```
+
+## 🚀 Quick Start
 
 ```bash
-git clone <your-repo-url>
+# 1. Clone and setup
+git clone <repo-url>
 cd pgbouncer-performance-test
-```
 
-### Step 2: Deploy Infrastructure (One Command!)
-
-```bash
+# 2. Deploy infrastructure (~15 minutes)
 ./deploy.sh
-```
 
-This will:
-- Create all AWS infrastructure
-- Configure PgBouncer with optimized settings
-- Set up test client with performance testing tools
-- Show you connection details
-
-### Step 3: Run Performance Tests (One Command!)
-
-```bash
+# 3. Run tests and get results (~15 minutes)
 ./post_deploy.sh
-```
 
-This will:
-- Copy full test scripts to the client
-- Run comprehensive performance comparison tests
-- Download results to your local machine
-- Generate detailed analysis report
-
-### Step 4: Clean Up
-
-```bash
+# 4. Clean up when done
 ./cleanup.sh
 ```
 
-## 📈 Test Results
+## 📈 Expected Results
 
-The test suite runs three comprehensive tests:
+| Scenario | Direct DB | PgBouncer | Improvement |
+|----------|-----------|-----------|-------------|
+| **Connection Overhead** | ~100 TPS | ~800 TPS | **8x faster** |
+| **High Concurrency** | ~200 TPS | ~600 TPS | **3x faster** |  
+| **Extreme Load** | **FAILS** | ~400 TPS | **100% success** |
 
-1. **Connection Overhead Test**: 20 clients, 100 transactions each, new connection per transaction
-   - Shows PgBouncer's biggest advantage: eliminating connection setup time
+## 💡 Key Benefits
 
-2. **High Concurrency Test**: 100 clients with persistent connections
-   - Demonstrates scalability benefits
-
-3. **Extreme Load Test**: 1000 clients (exceeds PostgreSQL limits)
-   - Shows how PgBouncer handles workloads that would crash direct connections
-
-## 💡 Key Learnings
-
-### When PgBouncer Shines:
-- **High connection churn** (web applications, microservices)
-- **Connection-heavy workloads** with short transactions
-- **Applications exceeding database connection limits**
-- **Resource optimization** scenarios
-
-### Performance Gains:
-- **11x throughput improvement** in connection-overhead scenarios
-- **32% latency reduction** even with the same transactions
-- **Unlimited scalability** beyond database connection limits
-- **Zero connection errors** under high load
+- **Eliminates connection overhead** for massive performance gains
+- **Handles 1000+ concurrent connections** vs PostgreSQL's 100 limit
+- **Provides reliable connection pooling** and queuing
+- **Reduces latency and increases throughput** consistently
 
 ## 🔧 Troubleshooting
 
