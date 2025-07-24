@@ -43,10 +43,10 @@ cleanup_between_tests() {
     # 2. Reset PgBouncer pools
     echo "   ⏳ Resetting PgBouncer connection pools..."
     psql -h "$PGBOUNCER_HOST" -p "$PGBOUNCER_PORT" -U "$DB_USERNAME" -d pgbouncer \
-        -c "PAUSE;" > /dev/null 2>&1 || echo "   ⚠️  PgBouncer pause failed (non-critical)"
+        -c "PAUSE;" > /dev/null 2>&1 
     sleep 3
     psql -h "$PGBOUNCER_HOST" -p "$PGBOUNCER_PORT" -U "$DB_USERNAME" -d pgbouncer \
-        -c "RESUME;" > /dev/null 2>&1 || echo "   ⚠️  PgBouncer resume failed (non-critical)"
+        -c "RESUME;" > /dev/null 2>&1 
     
     # 3. Clear OS caches (attempt)
     echo "   ⏳ Attempting to clear OS caches..."
@@ -215,10 +215,10 @@ if command -v python3 > /dev/null && [ -f "analyze_results_improved.py" ]; then
     python3 analyze_results_improved.py "$RESULTS_DIR" "$TIMESTAMP"
 elif [ -f "/home/ubuntu/analyze_results_improved.py" ]; then
     python3 /home/ubuntu/analyze_results_improved.py "$RESULTS_DIR" "$TIMESTAMP"
-elif command -v python3 > /dev/null && [ -f "analyze_results.py" ]; then
-    python3 analyze_results.py "$RESULTS_DIR" "$TIMESTAMP"
-elif [ -f "/home/ubuntu/analyze_results.py" ]; then
-    python3 /home/ubuntu/analyze_results.py "$RESULTS_DIR" "$TIMESTAMP"
+elif command -v python3 > /dev/null && [ -f "analyze_results_improved.py" ]; then
+    python3 analyze_results_improved.py "$RESULTS_DIR" "$TIMESTAMP"
+elif [ -f "/home/ubuntu/analyze_results_improved.py" ]; then
+    python3 /home/ubuntu/analyze_results_improved.py "$RESULTS_DIR" "$TIMESTAMP"
 else
     echo "Analysis script not found, generating basic summary..."
     

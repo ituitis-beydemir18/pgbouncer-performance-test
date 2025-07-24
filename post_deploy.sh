@@ -145,8 +145,8 @@ else
 fi
 
 # Copy analysis script
-if [ -f "../scripts/analyze_results.py" ]; then
-    scp -i "$SSH_KEY_FILE" -o StrictHostKeyChecking=no "../scripts/analyze_results.py" ubuntu@"$TEST_CLIENT_IP":/home/ubuntu/analyze_results.py
+if [ -f "../scripts/analyze_results_improved.py" ]; then
+    scp -i "$SSH_KEY_FILE" -o StrictHostKeyChecking=no "../scripts/analyze_results_improved.py" ubuntu@"$TEST_CLIENT_IP":/home/ubuntu/analyze_results_improved.py
     log_success "Analysis script uploaded"
 else
     log_warning "Analysis script not found, skipping..."
@@ -187,7 +187,7 @@ echo ""
 
 # Run analysis on remote server
 log_info "Running analysis on test client..."
-if run_ssh_command "test -f /home/ubuntu/analyze_results.py && test -d /home/ubuntu/test_results"; then
+if run_ssh_command "test -f /home/ubuntu/analyze_results_improved.py && test -d /home/ubuntu/test_results"; then
     # Find the timestamp from test results
     REMOTE_TIMESTAMP=$(run_ssh_command "ls /home/ubuntu/test_results/ | grep -E '_(20[0-9]{6}_[0-9]{6})\.log$' | head -1 | sed 's/.*_\(20[0-9]\{6\}_[0-9]\{6\}\)\.log$/\1/'" 2>/dev/null || echo "")
     
@@ -196,7 +196,7 @@ if run_ssh_command "test -f /home/ubuntu/analyze_results.py && test -d /home/ubu
         log_info "Generating performance analysis on remote server..."
         
         # Run analysis on remote server
-        if run_ssh_command "cd /home/ubuntu && python3 analyze_results.py test_results $REMOTE_TIMESTAMP"; then
+        if run_ssh_command "cd /home/ubuntu && python3 analyze_results_improved.py test_results $REMOTE_TIMESTAMP"; then
             log_success "Remote analysis completed successfully"
         else
             log_warning "Remote analysis failed, will try local analysis later"
@@ -245,15 +245,15 @@ fi
 # Try to run analysis locally if Python is available and results were downloaded
 if command -v python3 > /dev/null && ls "$LOCAL_RESULTS_DIR"/summary_*.txt > /dev/null 2>&1; then
     log_info "Running local analysis..."
-    if [ -f "scripts/analyze_results.py" ]; then
+    if [ -f "scripts/analyze_results_improved.py" ]; then
         # Copy analyze script to results directory and run it
-        cp scripts/analyze_results.py "$LOCAL_RESULTS_DIR/"
+        cp scripts/analyze_results_improved.py "$LOCAL_RESULTS_DIR/"
         cd "$LOCAL_RESULTS_DIR"
         
         # Find the timestamp from downloaded files
         LOCAL_TIMESTAMP=$(ls summary_*.txt 2>/dev/null | head -1 | sed 's/summary_//g' | sed 's/.txt//g' || echo "")
         if [ -n "$LOCAL_TIMESTAMP" ]; then
-            python3 analyze_results.py . "$LOCAL_TIMESTAMP" || log_warning "Local analysis failed"
+            python3 analyze_results_improved.py . "$LOCAL_TIMESTAMP" || log_warning "Local analysis failed"
         fi
         cd - > /dev/null
     fi

@@ -72,7 +72,7 @@ pgbench -h "$PGBOUNCER_HOST" -p "$PGBOUNCER_PORT" -U "$DB_USERNAME" -d "$DB_NAME
 
 # Generate summary report
 echo "Generating performance summary..."
-python3 /home/ubuntu/analyze_results.py "$RESULTS_DIR" "$TIMESTAMP"
+python3 /home/ubuntu/analyze_results_improved.py "$RESULTS_DIR" "$TIMESTAMP"
 
 echo ""
 echo "======================================"
